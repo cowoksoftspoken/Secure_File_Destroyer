@@ -38,6 +38,7 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
+---
 ### 🧠 Build (Advanced - AES + OpenSSL)
 ```bash
 cmake .. -A x64 -DUSE_OPENSSL=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
