@@ -3,7 +3,7 @@
  * Project     : Secure Delete
  * File        : main.cpp
  * Author      : Inggrit Setya Budi — (Software Engineering Student)
- * Description : Secure removal tool for portfolio.
+ * Description : Secure removal tool
  * Notes       : This tool operates at user-file level only and will
  *               refuse system/root paths. It intentionally avoids
  *               raw-device destructive features (no OS wipe).
