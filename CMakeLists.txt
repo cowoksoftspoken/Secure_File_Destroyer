@@ -1,0 +1,51 @@
+cmake_minimum_required(VERSION 3.16)
+project(SecureDeletePortfolio LANGUAGES CXX VERSION 1.2.0)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+add_executable(secure_delete src/main.cpp)
+
+target_include_directories(secure_delete PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+if (WIN32)
+    target_compile_definitions(secure_delete PRIVATE PLATFORM_WINDOWS)
+else()
+    target_compile_definitions(secure_delete PRIVATE PLATFORM_POSIX)
+endif()
+
+option(USE_OPENSSL "Enable AES encryption with OpenSSL" OFF)
+
+if (USE_OPENSSL)
+    find_package(OpenSSL REQUIRED)
+    if (OpenSSL_FOUND)
+        target_compile_definitions(secure_delete PRIVATE USE_OPENSSL)
+        target_link_libraries(secure_delete PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+    else()
+        message(WARNING "OpenSSL not found — falling back to XOR encryption mode.")
+    endif()
+else()
+    message(STATUS "OpenSSL disabled (USE_OPENSSL=OFF) — using XOR fallback encryption.")
+endif()
+
+if (MSVC)
+    target_compile_options(secure_delete PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(secure_delete PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+option(ENABLE_COLOR_OUTPUT "Enable ANSI color output for CLI" ON)
+if (ENABLE_COLOR_OUTPUT)
+    target_compile_definitions(secure_delete PRIVATE ENABLE_COLOR_OUTPUT)
+endif()
+
+install(TARGETS secure_delete RUNTIME DESTINATION bin)
+
+message(STATUS "   SecureDelete configured successfully!")
+message(STATUS "   Version: ${PROJECT_VERSION}")
+message(STATUS "   Build type: ${CMAKE_BUILD_TYPE}")

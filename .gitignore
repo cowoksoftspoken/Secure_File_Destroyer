@@ -1,0 +1,15 @@
+build/*
+
+!build/bin/
+!build/bin/**
+
+build/CMakeFiles/
+build/CMakeCache.txt
+build/*.log
+build/*.obj
+build/*.pdb
+build/*.lib
+build/*.dll
+build/*.a
+build/*.so
+build/*.dylib
