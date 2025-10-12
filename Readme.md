@@ -148,6 +148,7 @@ secure_delete.log
 **Inggrit Setya Budi**  
 Software Engineering Student  
 Built with ❤️ for portfolio & addressing file deletion concerns.
+
 ---
 
 ## 📜 License
