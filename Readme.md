@@ -17,7 +17,6 @@ It’s designed to *overwrite, encrypt, and safely remove* files so they **can�
 ✅ **Automatic SSD/HDD detection** — shows warning & secure erase recommendations.  
 ✅ **Detailed logging** — every operation saved in `secure_delete.log`.  
 ✅ **Multi-step confirmation** — prevents accidental deletion.  
-✅ **Colorful CLI output** — clear progress and status messages.  
 ✅ **Cross-platform** — works on Windows and Linux.
 
 ---
