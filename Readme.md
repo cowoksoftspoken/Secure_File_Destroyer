@@ -145,10 +145,9 @@ secure_delete.log
 
 ## ✨ Author
 
-**Inggrit**  
-Software Engineering Student @ SMK Krian 1  
-Built with ❤️ for portfolio & learning cybersecurity fundamentals.
-
+**Inggrit Setya Budi**  
+Software Engineering Student  
+Built with ❤️ for portfolio & addressing file deletion concerns.
 ---
 
 ## 📜 License
