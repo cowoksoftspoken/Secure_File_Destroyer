@@ -2,7 +2,7 @@
 
 > **Safe-by-default, SSD-aware secure file deletion tool — built for real-world data security practice.**
 
-This project is an **educational secure file destroyer tool** made to demonstrate real secure deletion principles without being destructive to your system.  
+This project is an **Secure file destroyer tool** made to demonstrate real secure deletion principles without being destructive to your system.  
 It’s designed to *overwrite, encrypt, and safely remove* files so they **can’t be recovered by standard recovery software**.
 
 ---
