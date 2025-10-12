@@ -1,4 +1,4 @@
-# 🔒 Secure Delete Portfolio
+# 🔒 Secure Delete File Destroyer
 
 > **Safe-by-default, SSD-aware secure file deletion tool — built for real-world data security practice.**
 
@@ -37,3 +37,13 @@ cd build
 
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
+```
+### 🧠 Build (Advanced - AES + OpenSSL)
+```bash
+cmake .. -A x64 -DUSE_OPENSSL=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config Release
+```
+Executable will be placed in:
+```bash
+build/bin/secure_delete.exe
+```
