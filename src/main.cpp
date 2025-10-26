@@ -149,7 +149,6 @@ int detect_rotational(const fs::path &p)
 #endif
 }
 
-// ----------------- logging -----------------
 void log_line(const std::string &line)
 {
     std::ofstream ofs("secure_delete.log", std::ios::app);
@@ -172,9 +171,23 @@ std::string file_sha256(const fs::path &p)
     std::ifstream ifs(p, std::ios::binary);
     if (!ifs)
         return {};
-    std::ostringstream ss;
-    ss << ifs.rdbuf();
-    return picosha2::hash256_hex_string(ss.str());
+
+    std::vector<unsigned char> buffer(1024 * 1024);
+    picosha2::hash256_one_by_one hasher;
+
+    while (ifs.good())
+    {
+        ifs.read(reinterpret_cast<char *>(buffer.data()), buffer.size());
+        std::streamsize read_bytes = ifs.gcount();
+        if (read_bytes > 0)
+            hasher.process(buffer.data(), buffer.data() + read_bytes);
+    }
+
+    hasher.finish();
+
+    std::string hex_hash;
+    picosha2::get_hash_hex_string(hasher, hex_hash);
+    return hex_hash;
 }
 
 #ifdef USE_OPENSSL

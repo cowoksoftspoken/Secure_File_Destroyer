@@ -13,3 +13,5 @@ build/*.dll
 build/*.a
 build/*.so
 build/*.dylib
+
+.vscode
