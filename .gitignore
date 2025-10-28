@@ -1,5 +1,5 @@
 # Ignore build artifacts cause they can be regenerated
-build
+build/
 
 # ignore Visual Studio Code settings
 .vscode
