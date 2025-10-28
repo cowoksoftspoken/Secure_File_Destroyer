@@ -1,17 +1,5 @@
-build/*
+# Ignore build artifacts cause they can be regenerated
+build
 
-!build/bin/
-!build/bin/**
-
-build/CMakeFiles/
-build/CMakeCache.txt
-build/*.log
-build/*.obj
-build/*.pdb
-build/*.lib
-build/*.dll
-build/*.a
-build/*.so
-build/*.dylib
-
+# ignore Visual Studio Code settings
 .vscode

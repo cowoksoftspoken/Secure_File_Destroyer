@@ -40,7 +40,7 @@
 #include <openssl/rand.h>
 #endif
 
-#include "picosha2.hpp"
+#include "picosha2.h"
 
 namespace fs = std::filesystem;
 
@@ -62,7 +62,8 @@ bool is_root_or_system_path(const fs::path &p)
             return true;
     }
     std::string low = s;
-    std::transform(low.begin(), low.end(), low.begin(), ::tolower);
+    std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c)
+                   { return std::tolower(c); });
     const std::vector<std::string> win_forbid = {
         "c:\\windows", "c:\\program files", "c:\\program files (x86)"};
     for (auto &f : win_forbid)

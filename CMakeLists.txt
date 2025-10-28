@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25) 
 project(SecureDeletePortfolio LANGUAGES CXX VERSION 1.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,11 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+foreach(OUTPUTCONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_BINARY_DIR}/bin/${OUTPUTCONFIG})
+endforeach()
 
 add_executable(secure_delete src/main.cpp)
-
 target_include_directories(secure_delete PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 if (WIN32)
@@ -20,7 +21,6 @@ else()
 endif()
 
 option(USE_OPENSSL "Enable AES encryption with OpenSSL" OFF)
-
 if (USE_OPENSSL)
     find_package(OpenSSL REQUIRED)
     if (OpenSSL_FOUND)
@@ -48,4 +48,6 @@ install(TARGETS secure_delete RUNTIME DESTINATION bin)
 
 message(STATUS "   SecureDelete configured successfully!")
 message(STATUS "   Version: ${PROJECT_VERSION}")
-message(STATUS "   Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "   Generator: ${CMAKE_GENERATOR}")
+message(STATUS "   Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "   Output: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
