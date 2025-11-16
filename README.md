@@ -1,97 +1,298 @@
-# Secure Delete Tool (Enhanced)
+    ███████╗███████╗ ██████╗██╗   ██╗██████╗ ███████╗     ██████╗ ███████╗████████╗███████╗██████╗
+    ██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██╔════╝    ██╔════╝ ██╔════╝╚══██╔══╝██╔════╝██╔══██╗
+    ███████╗█████╗  ██║     ██║   ██║██████╔╝█████╗      ██║  ███╗█████╗     ██║   █████╗  ██████╔╝
+    ╚════██║██╔══╝  ██║     ██║   ██║██╔══██╗██╔══╝      ██║   ██║██╔══╝     ██║   ██╔══╝  ██╔══██╗
+    ███████║███████╗╚██████╗╚██████╔╝██║  ██║███████╗    ╚██████╔╝███████╗   ██║   ███████╗██║  ██║
+    ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝     ╚═════╝ ╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 
-A command-line utility written in C++ that securely deletes files by overwriting them multiple times before deletion, making recovery extremely difficult or impossible. Enhanced version includes platform-awareness, colored output, and encryption-based approaches.
+# Secure Delete --- Cross‑Platform Data Destruction Engine
 
-## Features
+Secure Delete is a modern, industrial‑grade file destruction tool built
+in C++.\
+It provides reliable, forensic‑resistant data wiping on Windows, Linux,
+and macOS using platform‑native APIs.
 
-- Multiple overwrite passes using different patterns
-- Random data generation for additional security
-- User confirmation before deletion
-- File renaming as an additional security measure
-- Support for custom number of overwrite passes
-- Colored CLI output for better user experience
-- Platform-specific warnings and recommendations
-- Progress bar visualization
-- Encryption-based secure deletion option
-- Compliance with data sanitization standards
+This tool is built for developers, security engineers, researchers, and
+power‑users who require **transparent, deterministic, and
+audit‑friendly** file destruction.
 
-## Installation
+---
 
-```bash
-# Clone or copy the source files
-g++ -std=c++11 -Wall -Wextra -O2 -o secure_delete secure_delete.cpp
-g++ -std=c++11 -Wall -Wextra -O2 -o secure_delete_enhanced secure_delete_enhanced.cpp
+# 🚀 Why Secure Delete Exists
 
-# Or use make
-make
+Most file deletion tools either:
 
-# Optionally install globally
-sudo make install
-```
+- use weak overwrite methods\
+- provide fake progress bars\
+- rely on outdated assumptions\
+- lack Windows/POSIX parity\
+- hide behind closed‑source binaries
 
-## Usage
+**Secure Delete fixes that.**
 
-```bash
-# Basic usage (original version)
-./secure_delete [OPTIONS] <file_path>
+It gives you:
 
-# Enhanced version with all features
-./secure_delete_enhanced [OPTIONS] <file_path>
+- real‑time progress\
+- transparent algorithms\
+- readable C++ code\
+- platform‑native low‑level file access\
+- clear logs\
+- predictable behavior\
+- safe folder‑level deletion
 
-# With specific number of overwrite passes
-./secure_delete_enhanced -p 7 my_sensitive_file.txt
+This makes it suitable for:
 
-# Using random data for all passes
-./secure_delete_enhanced -r my_very_sensitive_file.txt
+- incident response / malware cleanup\
+- secure developer workflows\
+- automated pipelines\
+- research environments\
+- privacy‑focused distributions\
+- pentesting toolkits
 
-# With encryption-based approach
-./secure_delete_enhanced -e -p 5 my_ultra_sensitive_file.txt
+---
 
-# With both custom passes and random data
-./secure_delete_enhanced -p 10 -r my_top_secret_file.txt
+# ✨ Features (Fully Implemented)
 
-# Show help
-./secure_delete_enhanced --help
-```
+### 🔥 1. Real Forensic‑Grade Overwrite Engine
 
-## Options (Enhanced Version)
+Every byte is overwritten using `WriteFile` (Windows) or `pwrite`
+(POSIX).\
+After each pass, the tool forces OS‑level persistence using:
 
-- `-h, --help`: Show help message
-- `-p, --passes N`: Number of overwrite passes (default: 3)
-- `-r, --random`: Use random data for all passes instead of standard patterns
-- `-e, --encrypt`: Use encryption-based secure deletion approach
-- `-v, --verbose`: Show detailed progress information
+- `FlushFileBuffers` (Windows)
+- `fsync` (Linux/macOS)
 
-## Security Methodology
+This guarantees data is physically committed to disk instead of sitting
+in cache.
 
-The tool uses the following approach to securely delete files:
+### 🔥 2. Government‑Grade Algorithms
 
-1. **Multiple Overwrite Passes**: The file content is overwritten multiple times with different patterns
-   - If using standard patterns: First pass with zeros, second with ones, third with random data
-   - If using random data: Each pass uses a new random pattern
-   - Additional passes use random data regardless of mode
+You can choose:
 
-2. **Random Data Generation**: Each overwrite pass uses cryptographically secure random data
+- **Simple** (fast)
+- **DoD 5220.22‑M** (3‑pass)
+- **NSA 7‑pass**
+- **Gutmann 35‑pass**
 
-3. **File Renaming**: After overwriting, the file is renamed to a random name before final deletion
+Each algorithm produces deterministic patterns or cryptographically
+strong random data.
 
-4. **Platform Awareness**: The tool provides warnings about limitations on different platforms (Android, Windows)
+### 🔥 3. Real Progress Bar
 
-5. **File System Operations**: The tool flushes data to disk after each write operation to ensure it's actually written to storage
+Not fake.\
+Not a spinner.\
+The progress bar updates based on real:
 
-6. **Encryption Option**: When `-e` flag is used, the tool uses an encryption-based approach (in real implementations, this would involve actual encryption)
+- bytes written\
+- total bytes\
+- current pass\
+- total passes
 
-## Platform Effectiveness
+Example:
 
-- **Linux/HDD**: Highly effective
-- **Linux/SSD**: Moderately effective (TRIM may limit effectiveness)
-- **Android**: Limited effectiveness due to file-based encryption and storage management
-- **Windows**: Limited effectiveness due to journaling and other features
+    [\\\\\\\\\\\\\\\\\\--------------] 54%  (pass 2/3)
 
-## Warning
+### 🔥 4. Secure Folder Deletion
 
-This tool permanently and securely deletes files. Files deleted with this tool cannot be recovered using standard recovery tools. Use with extreme caution and ensure you have backups of important data before using this tool.
+Recursive deletion that processes files one by one, each with its own
+wipe workflow.
 
-## Compliance
+Perfect for:
 
-The standard overwrite pattern follows the DoD 5220.22-M standard for data sanitization (3-pass method), but allows for more passes for higher security requirements.
+- wiping logs\
+- wiping build directories\
+- wiping entire user folders
+
+### 🔥 5. Renaming Before Deletion
+
+Before deletion, files are renamed to random tokens.\
+This prevents recovering metadata such as:
+
+- original filename\
+- partial directory structure references\
+- cached file entry names
+
+### 🔥 6. Detailed Log File
+
+When enabled, the tool writes:
+
+- timestamps\
+- failed passes\
+- success notes\
+- algorithm used\
+- file list
+
+Great for automated systems.
+
+### 🔥 7. CMake Build System
+
+Cross‑platform CMake build for Windows, Linux, macOS.
+
+### 🔥 8. Cross‑Platform Architecture
+
+Completely separate backends:
+
+- `platform/win_delete.cpp`
+- `platform/posix_delete.cpp`
+
+Each uses native system calls for maximum reliability.
+
+---
+
+# 📦 Installation
+
+### Clone
+
+    git clone -b enhanced-version https://github.com/cowoksoftspoken/Secure_File_Destroyer.git
+    cd Secure_File_Destroyer
+
+### Build
+
+    cmake -S . -B build
+    cmake --build build
+
+Binary will be generated in:
+
+    bin/secure-delete
+
+---
+
+# 🧨 Usage Examples
+
+### Delete a File
+
+    secure-delete myfile.txt
+
+### Random Overwrite
+
+    secure-delete -r image.png
+
+### Use Algorithms
+
+    secure-delete --alg dod   secret.txt
+    secure-delete --alg nsa   logs.db
+    secure-delete --alg gutmann archive.zip
+
+### Custom Passes
+
+    secure-delete -p 5 binary.dump
+
+### Delete a Folder (Recursive)
+
+    secure-delete --folder ./sensitive_docs
+
+### Logging
+
+    secure-delete --log wipe.log keyfile.pem
+
+### Verbose Mode
+
+    secure-delete -v confidential.bin
+
+### Help
+
+    secure-delete --help
+
+---
+
+# ⚙️ How It Works (Deep Explanation)
+
+### 1. **File Opening**
+
+Uses:
+
+- `CreateFileA()` on Windows\
+- `open()` on POSIX
+
+Files are opened with both read/write privileges and direct overwrite
+flags.
+
+### 2. **Algorithm Pass Generation**
+
+The engine builds a vector of overwrite buffers based on:
+
+- algorithm selected\
+- file size\
+- security level
+
+### 3. **Overwrite Loop**
+
+For each pass:
+
+- file pointer resets\
+- buffer is written chunk‑by‑chunk\
+- progress bar updates\
+- bytes are flushed to disk
+
+This ensures:
+
+- write‑through\
+- non‑cached\
+- immediate persistence
+
+### 4. **Renaming**
+
+The file is renamed using a random filename generator in the same
+directory.
+
+### 5. **Deletion**
+
+After rename:
+
+- `DeleteFileA()` on Windows\
+- `unlink()` on POSIX
+
+This removes filesystem references.
+
+### 6. **Directory Sync**
+
+POSIX requires explicit directory sync to ensure metadata deletion is
+committed.
+
+### 7. **Cleanup & Logging**
+
+Logs are finalized and a success output is shown.
+
+---
+
+# 🧠 Effectiveness
+
+Platform Effectiveness Notes
+
+---
+
+HDD ⭐⭐⭐⭐⭐ Nearly unrecoverable with modern forensic tools
+SSD ⭐⭐⭐ Wear‑leveling limits overwrite reliability
+Windows ⭐⭐⭐⭐ NTFS MFT entry destruction + overwrite
+Linux/macOS ⭐⭐⭐⭐⭐ pwrite/fsync ensure real overwrite
+
+No software can fully defeat SSD wear‑leveling, but this tool performs
+as strongly as modern data‑wipe utilities.
+
+---
+
+# ⚠️ Disclaimer
+
+This tool **permanently destroys data**.\
+There is no recovery.\
+Use with caution.
+
+---
+
+# 🧪 Testing
+
+    ctest --test-dir build
+
+---
+
+# 💬 Support / Contributions
+
+Pull requests and feature requests are welcome.\
+Future expansions may include:
+
+- ADS wiping (Windows)
+- MFT slack wiping
+- File timestamp scrubbing
+- SSD Secure Erase integration
+- Parallel destruction mode
+- Config file support
