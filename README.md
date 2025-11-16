@@ -261,10 +261,13 @@ Platform Effectiveness Notes
 
 ---
 
-HDD ⭐⭐⭐⭐⭐ Nearly unrecoverable with modern forensic tools
-SSD ⭐⭐⭐ Wear‑leveling limits overwrite reliability
-Windows ⭐⭐⭐⭐ NTFS MFT entry destruction + overwrite
-Linux/macOS ⭐⭐⭐⭐⭐ pwrite/fsync ensure real overwrite
+| Media / OS   | Reliability | Notes |
+|--------------|------------|-------|
+| HDD          | ⭐⭐⭐⭐⭐     | Nearly unrecoverable with modern forensic tools |
+| SSD          | ⭐⭐⭐       | Wear‑leveling limits overwrite reliability |
+| Windows      | ⭐⭐⭐⭐      | NTFS MFT entry destruction + overwrite |
+| Linux/macOS  | ⭐⭐⭐⭐⭐     | pwrite/fsync ensure real overwrite |
+
 
 No software can fully defeat SSD wear‑leveling, but this tool performs
 as strongly as modern data‑wipe utilities.
