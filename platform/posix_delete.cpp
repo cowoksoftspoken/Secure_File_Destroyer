@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/time.h
 #include <filesystem>
 #include <string.h>
 #include <iostream>
@@ -23,18 +24,34 @@ bool secure_delete_file(const std::string &path,
         return false;
     }
 
-    uint64_t size = file_size_bytes(path);
+    std::string tmp = path;
+    if (opts.rename_before_delete)
+    {
+        tmp = random_filename_in_same_dir(path);
+        rename(path.c_str(), tmp.c_str());
+    }
+
+    uint64_t size = file_size_bytes(tmp);
     if (size == (uint64_t)-1)
     {
         err_msg = "could not stat file";
         return false;
     }
 
-    int fd = open(path.c_str(), O_RDWR);
+    int fd = open(tmp.c_str(), O_RDWR);
     if (fd < 0)
     {
         err_msg = strerror(errno);
         return false;
+    }
+
+    if (fallocate(fd, 0, 0, size) != 0)
+    {
+        log_write(opts.log_file, "Warning: fallocate() failed, continuing without speed optimization.");
+    }
+    else
+    {
+        log_write(opts.log_file, "fallocate() complete (speed optimization enabled).");
     }
 
     auto passes = generate_algorithm_passes(opts.algorithm, size);
@@ -88,14 +105,17 @@ bool secure_delete_file(const std::string &path,
         log_write(opts.log_file, "Pass " + std::to_string(pass + 1) + "/" + std::to_string(total_pass) + " complete");
     }
 
-    close(fd);
-
-    std::string tmp = path;
-    if (opts.rename_before_delete)
+    struct timespec ts[2] = {{0, UTIME_NOW}, {0, UTIME_NOW}};
+    if (futimens(fd, ts) != 0)
     {
-        tmp = random_filename_in_same_dir(path);
-        rename(path.c_str(), tmp.c_str());
+        log_write(opts.log_file, "Warning: could not wipe timestamp");
     }
+    else
+    {
+        log_write(opts.log_file, "Timestamp wiped");
+    }
+
+    close(fd);
 
     if (unlink(tmp.c_str()) != 0)
     {

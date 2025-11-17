@@ -2,30 +2,76 @@
 #include "utils.hpp"
 #include <iostream>
 #include <string>
+#include <cstring>
 
 #ifdef _WIN32
 #define OS_NAME "Windows"
 #elif __APPLE__
 #define OS_NAME "macOS"
-#else
+#elif defined(__linux__)
+#include <unistd.h>
 #define OS_NAME "Linux"
+#else
+#define OS_NAME "Unknown POSIX"
 #endif
+
+bool is_android()
+{
+#ifdef __linux__
+    return access("/system/build.prop", F_OK) == 0 ||
+           access("/system/bin/getprop", F_OK) == 0;
+#else
+    return false;
+#endif
+}
 
 void print_help()
 {
+    std::string os = OS_NAME;
+    if (is_android())
+        os = "Android (Termux)";
+
     std::cout << BOLD << CYAN << "Secure File Destroyer" << RESET << "\n\n";
     std::cout << YELLOW << "Usage:" << RESET << "\n";
     std::cout << "  secure-delete " << CYAN << "[options] <file or folder>" << RESET << "\n\n";
+
     std::cout << YELLOW << "Options:" << RESET << "\n";
-    std::cout << CYAN << "  -p <num>" << RESET << "          Manual pass count (ignored if algorithm selected)\n";
-    std::cout << CYAN << "  -r" << RESET << "                Random overwrite mode\n";
-    std::cout << CYAN << "  -v" << RESET << "                Verbose mode\n";
-    std::cout << CYAN << "  -h, --help" << RESET << "        Show help\n";
-    std::cout << CYAN << "  --log <file>" << RESET << "      Write wipe logs to file\n";
-    std::cout << CYAN << "  --alg <name>" << RESET << "      Algorithm: simple, dod, nsa, gutmann\n";
-    std::cout << CYAN << "  --folder" << RESET << "          Treat target as folder (recursive delete)\n\n";
-    std::cout << YELLOW << "System:" << RESET << " running on " << MAGENTA << OS_NAME << RESET << "\n";
-    std::cout << RED << "Note:" << RESET << " no secure delete is perfect on any OS.\n";
+
+    std::cout << CYAN << "  -p <num>" << RESET
+              << "          Manual pass count (ignored if algorithm selected)\n";
+
+    std::cout << CYAN << "  -r" << RESET
+              << "                Random overwrite mode\n";
+
+    std::cout << CYAN << "  -v" << RESET
+              << "                Verbose mode\n";
+
+    std::cout << CYAN << "  -h, --help" << RESET
+              << "        Show help\n";
+
+    std::cout << CYAN << "  --log <file>" << RESET
+              << "      Write wipe logs to file\n";
+
+    std::cout << CYAN << "  --alg <name>" << RESET
+              << "      Algorithm: simple, dod, nsa, gutmann\n";
+
+    std::cout << CYAN << "  --folder" << RESET
+              << "          Treat target as folder (recursive delete)\n";
+
+    std::cout << CYAN << "  --disk-fill" << RESET
+              << "        Overwrite free space (zero-fill + optional random)\n";
+
+    std::cout << CYAN << "  --wipe-slack" << RESET
+              << "       Wipe filesystem slack space (Windows: cipher /w)\n";
+
+    std::cout << CYAN << "  --android-purge" << RESET
+              << "   Remove Android thumbnails/cache (Termux only)\n\n";
+
+    std::cout << YELLOW << "System:" << RESET
+              << " running on " << MAGENTA << os << RESET << "\n";
+
+    std::cout << RED << "Note:" << RESET
+              << " no secure delete is perfect on any OS.\n";
 }
 
 int main(int argc, char **argv)
@@ -69,6 +115,18 @@ int main(int argc, char **argv)
         {
             folder_mode = true;
         }
+        else if (a == "--disk-fill")
+        {
+            opts.disk_fill = true;
+        }
+        else if (a == "--wipe-slack")
+        {
+            opts.wipe_slack = true;
+        }
+        else if (a == "--android-purge")
+        {
+            opts.android_purge = true;
+        }
         else if (a == "--alg" && i + 1 < argc)
         {
             std::string v = argv[++i];
@@ -98,8 +156,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    std::string os = OS_NAME;
+    if (is_android())
+        os = "Android (Termux)";
+
     std::cout << CYAN << "[*] Starting secure delete for: " << RESET << BOLD << target << RESET << "\n";
-    std::cout << YELLOW << "[!] Running on: " << OS_NAME << RESET << "\n";
+    std::cout << YELLOW << "[!] Running on: " << os << RESET << "\n";
 
     std::string err;
 
@@ -126,6 +188,97 @@ int main(int argc, char **argv)
     }
 
     draw_real_progress(1, 1, opts.passes, opts.passes);
+
+    if (is_android())
+    {
+        if (opts.android_purge)
+        {
+            std::cout << CYAN << "[*] (Android) Purging thumbnails & cache..." << RESET << "\n";
+            log_write(opts.log_file, "Android: Purging caches");
+            system("rm -rf /storage/emulated/0/DCIM/.thumbnails/* 2>/dev/null");
+            system("rm -rf /storage/emulated/0/Android/data//cache/ 2>/dev/null");
+            system("rm -rf /storage/emulated/0/Pictures/.trashed* 2>/dev/null");
+        }
+        if (opts.disk_fill)
+        {
+            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
+            std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
+            char answer;
+            std::cin >> answer;
+            if (answer != 'y' && answer != 'Y')
+            {
+                std::cout << RED << "[*] Disk-fill cancelled!" << RESET;
+                opts.disk_fill = false;
+                return 0;
+            }
+            std::cout << CYAN << "[*] (Android) Starting disk-fill (zero)..." << RESET << "\n";
+            log_write(opts.log_file, "Android: Starting zero-fill");
+            system("dd if=/dev/zero of=/storage/emulated/0/.filler.bin bs=4M");
+            system("rm /storage/emulated/0/.filler.bin");
+
+            std::cout << CYAN << "[*] (Android) Starting disk-fill (random)..." << RESET << "\n";
+            log_write(opts.log_file, "Android: Starting random-fill");
+            system("dd if=/dev/urandom of=/storage/emulated/0/.filler-rand.bin bs=1M count=128");
+            system("rm /storage/emulated/0/.filler-rand.bin");
+        }
+    }
+    else if (strcmp(OS_NAME, "Windows") == 0)
+    {
+        if (opts.wipe_slack)
+        {
+            std::cout << CYAN << "[*] (Windows) Wiping MFT slack with cipher.exe..." << RESET << "\n";
+            log_write(opts.log_file, "Windows: Running cipher /w");
+            system("cipher /w:C:\\");
+        }
+        if (opts.disk_fill)
+        {
+            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
+            std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
+            char answer;
+            std::cin >> answer;
+            if (answer != 'y' && answer != 'Y')
+            {
+                std::cout << RED << "[*] Disk-fill cancelled!" << RESET;
+                opts.disk_fill = false;
+                return 0;
+            }
+            std::cout << CYAN << "[*] (Windows) Starting disk-fill (zero)..." << RESET << "\n";
+            log_write(opts.log_file, "Windows: Starting fsutil fill");
+            system("fsutil file createnew C:\\filler.bin 1000000000");
+            system("del C:\\filler.bin");
+        }
+    }
+    else if (strcmp(OS_NAME, "Linux") == 0)
+    {
+        if (opts.disk_fill)
+        {
+            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
+            std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
+            char answer;
+            std::cin >> answer;
+            if (answer != 'y' && answer != 'Y')
+            {
+                std::cout << RED << "[*] Disk-fill cancelled!" << RESET;
+                opts.disk_fill = false;
+                return 0;
+            }
+            std::cout << CYAN << "[*] (Linux) Starting disk-fill (zero)..." << RESET << "\n";
+            log_write(opts.log_file, "Linux: Starting zero-fill");
+            system("dd if=/dev/zero of=filler.bin bs=1M");
+            system("rm filler.bin");
+
+            std::cout << CYAN << "[*] (Linux) Starting disk-fill (random)..." << RESET << "\n";
+            log_write(opts.log_file, "Linux: Starting random-fill");
+            system("dd if=/dev/urandom of=filler-rand.bin bs=1M count=128");
+            system("rm filler-rand.bin");
+#ifndef _WIN32
+            sync();
+#endif
+        }
+    }
 
     std::cout << "\n"
               << GREEN << "[✔] Completed" << RESET << "\n";

@@ -28,6 +28,9 @@ struct DeleteOptions
     OverwriteMode mode = OverwriteMode::Pattern;
     OverwriteAlgorithm algorithm = OverwriteAlgorithm::SIMPLE;
     std::string log_file = "";
+    bool disk_fill = false;
+    bool wipe_slack = false;
+    bool android_purge = false;
 };
 
 struct FileDeleteStatus

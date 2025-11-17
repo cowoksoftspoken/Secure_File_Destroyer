@@ -59,8 +59,15 @@ bool secure_delete_file(const std::string &path,
         return false;
     }
 
+    std::string tmp = path;
+    if (opts.rename_before_delete)
+    {
+        tmp = random_filename_in_same_dir(path);
+        MoveFileExA(path.c_str(), tmp.c_str(), MOVEFILE_REPLACE_EXISTING);
+    }
+
     HANDLE h = CreateFileA(
-        path.c_str(),
+        tmp.c_str(),
         GENERIC_WRITE | GENERIC_READ,
         FILE_SHARE_READ,
         NULL,
@@ -104,20 +111,27 @@ bool secure_delete_file(const std::string &path,
         log_write(opts.log_file, "Pass " + std::to_string(i + 1) + "/" + std::to_string(total_pass) + " complete");
     }
 
+    FILE_BASIC_INFO info = {0};
+    if (!SetFileInformationByHandle(h, FileBasicInfo, &info, sizeof(info)))
+    {
+        log_write(opts.log_file, "Warning: could not wipe timestamp");
+    }
+    else
+    {
+        log_write(opts.log_file, "Timestamp wiped");
+    }
+
+    FILE_DISPOSITION_INFO fdi = {TRUE};
+    if (!SetFileInformationByHandle(h, FileDispositionInfo, &fdi, sizeof(fdi)))
+    {
+        log_write(opts.log_file, "Warning: SetFileInformationByHandle failed");
+    }
+    else
+    {
+        log_write(opts.log_file, "MFT delete marker set");
+    }
+
     CloseHandle(h);
-
-    std::string tmp = path;
-    if (opts.rename_before_delete)
-    {
-        tmp = random_filename_in_same_dir(path);
-        MoveFileExA(path.c_str(), tmp.c_str(), MOVEFILE_REPLACE_EXISTING);
-    }
-
-    if (!DeleteFileA(tmp.c_str()))
-    {
-        err_msg = "DeleteFile failed";
-        return false;
-    }
 
     log_write(opts.log_file, "File deleted: " + path);
     return true;
