@@ -18,7 +18,7 @@ audit‑friendly** file destruction.
 
 ---
 
-# 🚀 Why Secure Delete Exists
+# Why Secure Delete Exists
 
 Most file deletion tools either:
 
@@ -51,9 +51,9 @@ This makes it suitable for:
 
 ---
 
-# ✨ Features (Fully Implemented)
+# Features (Fully Implemented)
 
-### 🔥 1. Real Forensic‑Grade Overwrite Engine
+### 1. Real Forensic‑Grade Overwrite Engine
 
 Every byte is overwritten using `WriteFile` (Windows) or `pwrite`
 (POSIX).\
@@ -65,7 +65,7 @@ After each pass, the tool forces OS‑level persistence using:
 This guarantees data is physically committed to disk instead of sitting
 in cache.
 
-### 🔥 2. Government‑Grade Algorithms
+### 2. Government‑Grade Algorithms
 
 You can choose:
 
@@ -77,7 +77,7 @@ You can choose:
 Each algorithm produces deterministic patterns or cryptographically
 strong random data.
 
-### 🔥 3. Real Progress Bar
+### 3. Real Progress Bar
 
 Not fake.\
 Not a spinner.\
@@ -92,7 +92,7 @@ Example:
 
     [\\\\\\\\\\\\\\\\\\--------------] 54%  (pass 2/3)
 
-### 🔥 4. Secure Folder Deletion
+### 4. Secure Folder Deletion
 
 Recursive deletion that processes files one by one, each with its own
 wipe workflow.
@@ -103,7 +103,7 @@ Perfect for:
 - wiping build directories\
 - wiping entire user folders
 
-### 🔥 5. Renaming Before Deletion
+### 5. Renaming Before Deletion
 
 Before deletion, files are renamed to random tokens.\
 This prevents recovering metadata such as:
@@ -112,7 +112,7 @@ This prevents recovering metadata such as:
 - partial directory structure references\
 - cached file entry names
 
-### 🔥 6. Detailed Log File
+### 6. Detailed Log File
 
 When enabled, the tool writes:
 
@@ -124,11 +124,11 @@ When enabled, the tool writes:
 
 Great for automated systems.
 
-### 🔥 7. CMake Build System
+### 7. CMake Build System
 
 Cross‑platform CMake build for Windows, Linux, macOS.
 
-### 🔥 8. Cross‑Platform Architecture
+### 8. Cross‑Platform Architecture
 
 Completely separate backends:
 
@@ -139,7 +139,7 @@ Each uses native system calls for maximum reliability.
 
 ---
 
-# 📦 Installation
+# Installation
 
 ### Clone
 
@@ -157,7 +157,7 @@ Binary will be generated in:
 
 ---
 
-# 🧨 Usage Examples
+# Usage Examples
 
 ### Delete a File
 
@@ -195,7 +195,7 @@ Binary will be generated in:
 
 ---
 
-# ⚙️ How It Works (Deep Explanation)
+# How It Works (Deep Explanation)
 
 ### 1. **File Opening**
 
@@ -255,7 +255,7 @@ Logs are finalized and a success output is shown.
 
 ---
 
-# 🧠 Effectiveness
+# Effectiveness
 
 Platform Effectiveness Notes
 
@@ -274,7 +274,7 @@ as strongly as modern data‑wipe utilities.
 
 ---
 
-# ⚠️ Disclaimer
+# Disclaimer
 
 This tool **permanently destroys data**.\
 There is no recovery.\
@@ -282,13 +282,13 @@ Use with caution.
 
 ---
 
-# 🧪 Testing
+# Testing
 
     ctest --test-dir build
 
 ---
 
-# 💬 Support / Contributions
+# Support / Contributions
 
 Pull requests and feature requests are welcome.\
 Future expansions may include:
