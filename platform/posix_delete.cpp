@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <filesystem>
 #include <string.h>
+#include <iostream>
 
 static bool full_fsync(int fd)
 {
