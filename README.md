@@ -1,192 +1,293 @@
-# Secure Delete — Cross-Platform Data Destruction Engine
+# Secure Delete --- Cross‑Platform Data Destruction Engine
 
-Secure Delete is a cross-platform data-destruction tool written in C++.
-It provides deterministic, transparent, and audit-friendly secure deletion
-for Windows, Linux, macOS, and Android (Termux).  
-The tool uses native low-level APIs on every platform to guarantee that
-overwrite operations are actually committed to disk instead of sitting
-in memory caches.
+Secure Delete is a modern, industrial‑grade file destruction tool built
+in C++.\
+It provides reliable, forensic‑resistant data wiping on Windows, Linux,
+and macOS using platform‑native APIs.
 
-## Purpose
+This tool is built for developers, security engineers, researchers, and
+power‑users who require **transparent, deterministic, and
+audit‑friendly** file destruction.
 
-Most data wiping utilities rely on outdated assumptions or provide an
-illusion of wiping. Secure Delete aims to provide a reliable, modern,
-and fully inspectable engine suitable for:
+---
 
-- privacy-driven workflows
-- secure developer operations
-- incident response
-- research and education
-- automated CI/CD cleanup
-- cross-platform toolkits
+# Why Secure Delete Exists
 
-## Core Features
+Most file deletion tools either:
 
-1. Native Overwrite Engine  
-   Windows:
+- use weak overwrite methods\
+- provide fake progress bars\
+- rely on outdated assumptions\
+- lack Windows/POSIX parity\
+- hide behind closed‑source binaries
 
-   - WriteFile
-   - FlushFileBuffers  
-     POSIX (Linux, macOS, Android):
-   - pwrite
-   - fsync  
-     Ensures written bytes are committed to storage.
+**Secure Delete fixes that.**
 
-2. Algorithms  
-   Supported algorithms:
+It gives you:
 
-   - simple (1 pass)
-   - DoD 5220.22-M (3 passes)
-   - NSA 7-pass
-   - Gutmann 35-pass
-   - custom manual pass count  
-     Each algorithm constructs deterministic or random overwrite buffers.
+- real‑time progress\
+- transparent algorithms\
+- readable C++ code\
+- platform‑native low‑level file access\
+- clear logs\
+- predictable behavior\
+- safe folder‑level deletion
 
-3. Rename-Before-Delete  
-   Files can be renamed to a random filename before deletion to obscure
-   metadata such as the original file name and associated directory entry.
+This makes it suitable for:
 
-4. Secure Folder Processing  
-   Recursively processes all files inside a directory, running the
-   overwrite engine on each file individually.
+- incident response / malware cleanup\
+- secure developer workflows\
+- automated pipelines\
+- research environments\
+- privacy‑focused distributions\
+- pentesting toolkits
 
-5. Logging  
-   Optional logging that records:
+---
 
-   - algorithm used
-   - each pass completion
-   - timestamps
-   - encountered errors
-   - file list
+# Features (Fully Implemented)
 
-6. Wipe-Slack  
-   Wipes the cluster slack or block tail of a file.  
-   Slack space is the unused bytes at the end of the last filesystem block.  
-   Purpose:
+### 1. Real Forensic‑Grade Overwrite Engine
 
-   - removes hidden residues stored after file end
-   - prevents forensic retrieval of block remnants  
-     Behavior varies by filesystem, since not all expose slack reliably.
+Every byte is overwritten using `WriteFile` (Windows) or `pwrite`
+(POSIX).\
+After each pass, the tool forces OS‑level persistence using:
 
-7. Android-Purge  
-   A cleanup mode for Termux installations.  
-   Removes:
+- `FlushFileBuffers` (Windows)
+- `fsync` (Linux/macOS)
 
-   - temporary caches inside the Termux app directory
-   - app-generated residue files
-   - data directories left behind by deleted apps  
-     This does not root the device and does not modify protected system
-     partitions. It focuses on user-accessible storage.
+This guarantees data is physically committed to disk instead of sitting
+in cache.
 
-8. Disk-Fill Mode  
-   Fills free space with one or more large temporary files until the disk
-   is nearly full.  
-   Purpose:
+### 2. Government‑Grade Algorithms
 
-   - overwrites previously deleted but still-recoverable free blocks
-   - reduces remnants that can be extracted using low-level forensic tools  
-     Notes:
-   - extremely intensive on SSD wear-leveling
-   - can heavily degrade device responsiveness while active
-   - should not be used frequently  
-     This is optional and disabled by default.
+You can choose:
 
-9. Platform-Native Metadata Sync  
-   After deletion, Secure Delete performs:
-   POSIX: fsync on parent directory  
-   Windows: uses DeleteFileA plus flush semantics  
-   Ensures directory entries and metadata are persisted.
+- **Simple** (fast)
+- **DoD 5220.22‑M** (3‑pass)
+- **NSA 7‑pass**
+- **Gutmann 35‑pass**
 
-10. Cross-Platform CMake Build System  
-    Buildable on all major platforms using the same workflow.
+Each algorithm produces deterministic patterns or cryptographically
+strong random data.
 
-## Effectiveness
+### 3. Real Progress Bar
 
-HDD:
+Not fake.\
+Not a spinner.\
+The progress bar updates based on real:
 
-- Very effective. Overwrites and disk-fill behave predictably.
-  SSD:
-- Reasonably effective, but subject to wear-leveling.  
-   No software can guarantee complete sanitization on an SSD without using
-  manufacturer firmware-level secure erase.
-  Windows NTFS:
-- Reliable overwrite plus directory entry removal.
-  Linux/macOS:
-- Strong POSIX overwrite semantics provide consistent results.
-  Android:
-- Depends on filesystem (usually f2fs or ext4).  
-  Overwrites are applied, but SSD characteristics still apply.
+- bytes written\
+- total bytes\
+- current pass\
+- total passes
 
-# Build Instructions
+Example:
 
-## Linux / macOS / Android (Termux)
+    [\\\\\\\\\\\\\\\\\\--------------] 54%  (pass 2/3)
+
+### 4. Secure Folder Deletion
+
+Recursive deletion that processes files one by one, each with its own
+wipe workflow.
+
+Perfect for:
+
+- wiping logs\
+- wiping build directories\
+- wiping entire user folders
+
+### 5. Renaming Before Deletion
+
+Before deletion, files are renamed to random tokens.\
+This prevents recovering metadata such as:
+
+- original filename\
+- partial directory structure references\
+- cached file entry names
+
+### 6. Detailed Log File
+
+When enabled, the tool writes:
+
+- timestamps\
+- failed passes\
+- success notes\
+- algorithm used\
+- file list
+
+Great for automated systems.
+
+### 7. CMake Build System
+
+Cross‑platform CMake build for Windows, Linux, macOS.
+
+### 8. Cross‑Platform Architecture
+
+Completely separate backends:
+
+- `platform/win_delete.cpp`
+- `platform/posix_delete.cpp`
+
+Each uses native system calls for maximum reliability.
+
+---
+
+# Installation
+
+### Clone
+
+    git clone -b enhanced-version https://github.com/cowoksoftspoken/Secure_File_Destroyer.git
+    cd Secure_File_Destroyer
+
+### Build
 
     cmake -S . -B build
     cmake --build build
 
-Output:
-bin/secure-delete
+Binary will be generated in:
 
-## Windows
+    bin/secure-delete
 
-Requirements:
-
-- MinGW (gcc, g++)
-- make
-- cmake
-
-Recommended installation via Scoop:
-
-    scoop install mingw
-    scoop install cmake
-    scoop install make
-
-Then:
-
-    cmake -S . -B build -G "MinGW Makefiles"
-    cmake --build build
+---
 
 # Usage Examples
 
-Basic delete:
-secure-delete file.txt
+### Delete a File
 
-Random overwrite:
-secure-delete -r file.bin
+    secure-delete myfile.txt
 
-Algorithms:
-secure-delete --alg dod sensitive.txt
-secure-delete --alg nsa credentials.db
-secure-delete --alg gutmann vm-dump.img
+### Random Overwrite
 
-Custom passes:
-secure-delete -p 7 dump.raw
+    secure-delete -r image.png
 
-Folder deletion:
-secure-delete --folder ./secure-data
+### Use Algorithms
 
-Slack wipe:
-secure-delete --wipe-slack target.bin
+    secure-delete --alg dod   secret.txt
+    secure-delete --alg nsa   logs.db
+    secure-delete --alg gutmann archive.zip
 
-Android purge:
-secure-delete --android-purge
+### Custom Passes
 
-Disk fill:
-secure-delete --disk-fill
+    secure-delete -p 5 binary.dump
 
-Logging:
-secure-delete --log report.log file.dat
+### Delete a Folder (Recursive)
 
-Help:
-secure-delete --help
+    secure-delete --folder ./sensitive_docs
 
-## LICENSE
+### Logging
 
-MIT LICENSE
+    secure-delete --log wipe.log keyfile.pem
 
-## Disclaimer
+### Verbose Mode
 
-This tool permanently destroys data.  
-The user is responsible for understanding its impact.  
-No guarantee of complete sanitization can be made on SSDs due to
-unpredictable wear-leveling behavior.
+    secure-delete -v confidential.bin
+
+### Help
+
+    secure-delete --help
+
+---
+
+# How It Works (Deep Explanation)
+
+### 1. **File Opening**
+
+Uses:
+
+- `CreateFileA()` on Windows\
+- `open()` on POSIX
+
+Files are opened with both read/write privileges and direct overwrite
+flags.
+
+### 2. **Algorithm Pass Generation**
+
+The engine builds a vector of overwrite buffers based on:
+
+- algorithm selected\
+- file size\
+- security level
+
+### 3. **Overwrite Loop**
+
+For each pass:
+
+- file pointer resets\
+- buffer is written chunk‑by‑chunk\
+- progress bar updates\
+- bytes are flushed to disk
+
+This ensures:
+
+- write‑through\
+- non‑cached\
+- immediate persistence
+
+### 4. **Renaming**
+
+The file is renamed using a random filename generator in the same
+directory.
+
+### 5. **Deletion**
+
+After rename:
+
+- `DeleteFileA()` on Windows\
+- `unlink()` on POSIX
+
+This removes filesystem references.
+
+### 6. **Directory Sync**
+
+POSIX requires explicit directory sync to ensure metadata deletion is
+committed.
+
+### 7. **Cleanup & Logging**
+
+Logs are finalized and a success output is shown.
+
+---
+
+# Effectiveness
+
+Platform Effectiveness Notes
+
+---
+
+| Media / OS  | Reliability | Notes                                           |
+| ----------- | ----------- | ----------------------------------------------- |
+| HDD         | ⭐⭐⭐⭐⭐  | Nearly unrecoverable with modern forensic tools |
+| SSD         | ⭐⭐⭐      | Wear‑leveling limits overwrite reliability      |
+| Windows     | ⭐⭐⭐⭐    | NTFS MFT entry destruction + overwrite          |
+| Linux/macOS | ⭐⭐⭐⭐⭐  | pwrite/fsync ensure real overwrite              |
+
+No software can fully defeat SSD wear‑leveling, but this tool performs
+as strongly as modern data‑wipe utilities.
+
+---
+
+# Disclaimer
+
+This tool **permanently destroys data**.\
+There is no recovery.\
+Use with caution.
+
+---
+
+# Testing
+
+    ctest --test-dir build
+
+---
+
+# Support / Contributions
+
+Pull requests and feature requests are welcome.\
+Future expansions may include:
+
+- ADS wiping (Windows)
+- MFT slack wiping
+- File timestamp scrubbing
+- SSD Secure Erase integration
+- Parallel destruction mode
+- Config file support
