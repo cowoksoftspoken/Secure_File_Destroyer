@@ -5,17 +5,17 @@
 ███████║███████╗╚██████╗╚██████╔╝██║  ██║███████╗    ╚██████╔╝███████╗   ██║   ███████╗██║  ██║
 ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝     ╚═════╝ ╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 
-Secure Delete — Cross-Platform Data Destruction Engine
-======================================================
+# Secure Delete — Cross-Platform Data Destruction Engine
 
 Secure Delete is a modern C++ data destruction engine
 designed for Windows, Linux, macOS, and Android (Termux).
 It uses native low-level APIs to ensure that overwrite operations
 are actually committed to physical storage.
 
-Why This Exists
----------------
+## Why This Exists
+
 Most "secure delete" tools:
+
 - use weak overwrite methods
 - simulate progress bars instead of real progress
 - rely on outdated assumptions
@@ -23,25 +23,27 @@ Most "secure delete" tools:
 - hide their implementation details
 
 Secure Delete provides:
+
 - real progress based on bytes written
 - transparent and auditable algorithms
 - deterministic behavior
 - directory sync to ensure metadata removal
 - fully open and readable C++ source
 
-Core Features
--------------
+## Core Features
 
 1. **Forensic-Grade Overwrite Engine**
    Windows:
-     - WriteFile
-     - FlushFileBuffers
-   POSIX:
-     - pwrite
-     - fsync
-   Ensures data is physically persisted.
+
+   - WriteFile
+   - FlushFileBuffers
+     POSIX:
+   - pwrite
+   - fsync
+     Ensures data is physically persisted.
 
 2. **Supported Algorithms**
+
    - simple (1 pass)
    - DoD 5220.22-M (3 passes)
    - NSA 7-pass
@@ -50,6 +52,7 @@ Core Features
 
 3. **Real Progress Bar**
    Updates based on:
+
    - bytes_written
    - bytes_total
    - current_pass / total_pass
@@ -59,11 +62,13 @@ Core Features
 
 5. **Rename-Before-Delete**
    Hides metadata such as:
+
    - original filename
    - directory entry remnants
 
 6. **Detailed Logging**
    Optional logging of:
+
    - each pass result
    - timestamps
    - errors
@@ -76,11 +81,10 @@ Core Features
 
 8. **Cross-Platform CMake Build System**
 
-Build Instructions
-==================
+# Build Instructions
 
-Linux / macOS / Android (Termux)
---------------------------------
+## Linux / macOS / Android (Termux)
+
 Just run:
 
     cmake -S . -B build
@@ -90,9 +94,10 @@ Binary output:
 
     bin/secure-delete
 
-Windows
--------
+## Windows
+
 Requirements:
+
 - MinGW (gcc / g++)
 - make
 - cmake
@@ -108,8 +113,7 @@ Then:
     cmake -S . -B build -G "MinGW Makefiles"
     cmake --build build
 
-Usage Examples
-==============
+# Usage Examples
 
 Delete a file:
 
@@ -145,35 +149,25 @@ Help:
 
     secure-delete --help
 
-Effectiveness
--------------
+## Effectiveness
 
-| Storage / OS | Reliability | Notes |
-|--------------|-------------|-------|
-| HDD          | ⭐⭐⭐⭐⭐      | Overwrites fully effective |
-| SSD          | ⭐⭐⭐        | Wear-leveling reduces guarantees |
-| Windows NTFS | ⭐⭐⭐⭐       | Metadata wipe + overwrite |
-| Linux/macOS  | ⭐⭐⭐⭐⭐      | Strong POSIX overwrite semantics |
+| Storage / OS | Reliability | Notes                            |
+| ------------ | ----------- | -------------------------------- |
+| HDD          | ⭐⭐⭐⭐⭐  | Overwrites fully effective       |
+| SSD          | ⭐⭐⭐      | Wear-leveling reduces guarantees |
+| Windows NTFS | ⭐⭐⭐⭐    | Metadata wipe + overwrite        |
+| Linux/macOS  | ⭐⭐⭐⭐⭐  | Strong POSIX overwrite semantics |
 
 SSD note:
 No software can guarantee full sanitization because wear-leveling
 redirects writes to new blocks, but Secure Delete wipes as reliably
 as modern OS APIs allow.
 
-Disclaimer
-----------
+## Disclaimer
+
 This tool irreversibly destroys data.
 Use at your own risk.
 
-Testing
--------
+## Testing
+
     ctest --test-dir build
-
-Future Expansions
------------------
-- ADS wiping (Windows)
-- MFT slack wiping
-- timestamp scrubbing
-- SSD secure erase
-- parallel wipe mode
-
