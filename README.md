@@ -143,46 +143,67 @@ Recommended installation via Scoop:
 
 Then:
 
-    cmake -S . -B build -G "MinGW Makefiles"
+    cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++
     cmake --build build
 
 # Usage Examples
 
 Basic delete:
+```bash
 secure-delete file.txt
+```
 
 Random overwrite:
+```bash
 secure-delete -r file.bin
+```
 
 Algorithms:
+```bash
 secure-delete --alg dod sensitive.txt
 secure-delete --alg nsa credentials.db
 secure-delete --alg gutmann vm-dump.img
+```
 
 Custom passes:
+```bash
 secure-delete -p 7 dump.raw
+```
 
 Folder deletion:
+```bash
 secure-delete --folder ./secure-data
+```
 
 Slack wipe:
+```bash
 secure-delete --wipe-slack target.bin
+```
 
 Android purge:
+```bash
 secure-delete --android-purge
+```
 
 Disk fill:
+```bash
 secure-delete --disk-fill
+```
 
 Logging:
+```bash
 secure-delete --log report.log file.dat
+```
 
 Help:
+```bash
 secure-delete --help
+```
 
 ## License
-
+```
 MIT LICENSE
+```
 
 ## Disclaimer
 
