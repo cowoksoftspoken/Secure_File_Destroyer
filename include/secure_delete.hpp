@@ -53,9 +53,7 @@ bool secure_delete_folder(const std::string &folder_path,
                           std::string &err_msg,
                           ProgressCallback progress = nullptr);
 
-std::vector<std::vector<uint8_t>> generate_algorithm_passes(
-    OverwriteAlgorithm alg,
-    uint64_t file_size);
+std::vector<std::vector<uint8_t>> generate_algorithm_passes(OverwriteAlgorithm alg);
 
 void log_write(const std::string &file, const std::string &text);
 

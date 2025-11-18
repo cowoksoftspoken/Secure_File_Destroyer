@@ -2,25 +2,20 @@
 #include <vector>
 #include <cstdint>
 
-std::vector<std::vector<uint8_t>> generate_algorithm_passes(
-    OverwriteAlgorithm alg,
-    uint64_t file_size)
+std::vector<std::vector<uint8_t>> generate_algorithm_passes(OverwriteAlgorithm alg)
 {
     std::vector<std::vector<uint8_t>> passes;
 
-    if (file_size == 0)
-        file_size = 1;
-
     auto P = [&](uint8_t v)
-    {
-        return std::vector<uint8_t>(file_size, v);
-    };
+    { return std::vector<uint8_t>{v}; };
+    auto R = [&]()
+    { return std::vector<uint8_t>{}; };
 
     if (alg == OverwriteAlgorithm::SIMPLE)
     {
         passes.push_back(P(0x00));
         passes.push_back(P(0xFF));
-        passes.push_back(std::vector<uint8_t>(file_size));
+        passes.push_back(R());
         return passes;
     }
 
@@ -28,11 +23,11 @@ std::vector<std::vector<uint8_t>> generate_algorithm_passes(
     {
         passes.push_back(P(0x00));
         passes.push_back(P(0xFF));
-        passes.push_back(std::vector<uint8_t>(file_size));
+        passes.push_back(R());
         passes.push_back(P(0x00));
         passes.push_back(P(0xFF));
-        passes.push_back(std::vector<uint8_t>(file_size));
-        passes.push_back(std::vector<uint8_t>(file_size));
+        passes.push_back(R());
+        passes.push_back(R());
         return passes;
     }
 
@@ -40,11 +35,11 @@ std::vector<std::vector<uint8_t>> generate_algorithm_passes(
     {
         passes.push_back(P(0x00));
         passes.push_back(P(0xFF));
-        passes.push_back(std::vector<uint8_t>(file_size));
-        passes.push_back(std::vector<uint8_t>(file_size));
-        passes.push_back(std::vector<uint8_t>(file_size));
+        passes.push_back(R());
+        passes.push_back(R());
+        passes.push_back(R());
         passes.push_back(P(0xAA));
-        passes.push_back(std::vector<uint8_t>(file_size));
+        passes.push_back(R());
         return passes;
     }
 

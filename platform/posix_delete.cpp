@@ -3,10 +3,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/time.h
+#include <sys/time.h>
 #include <filesystem>
 #include <string.h>
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
 static bool full_fsync(int fd)
 {
@@ -28,7 +30,8 @@ bool secure_delete_file(const std::string &path,
     if (opts.rename_before_delete)
     {
         tmp = random_filename_in_same_dir(path);
-        rename(path.c_str(), tmp.c_str());
+        if (rename(path.c_str(), tmp.c_str()) != 0)
+            tmp = path;
     }
 
     uint64_t size = file_size_bytes(tmp);
@@ -45,28 +48,54 @@ bool secure_delete_file(const std::string &path,
         return false;
     }
 
-    if (fallocate(fd, 0, 0, size) != 0)
-    {
-        log_write(opts.log_file, "Warning: fallocate() failed, continuing without speed optimization.");
-    }
-    else
-    {
-        log_write(opts.log_file, "fallocate() complete (speed optimization enabled).");
-    }
+    const size_t CHUNK_SIZE = 1024 * 1024;
+    std::vector<uint8_t> buffer(CHUNK_SIZE);
 
-    auto passes = generate_algorithm_passes(opts.algorithm, size);
-    int total_pass = (int)passes.size();
+    auto pass_patterns = generate_algorithm_passes(opts.algorithm);
+    int total_pass = (int)pass_patterns.size();
+
+    if (opts.algorithm == OverwriteAlgorithm::SIMPLE && opts.mode == OverwriteMode::Random && opts.passes > 3)
+    {
+        total_pass = opts.passes;
+        pass_patterns.assign(total_pass, std::vector<uint8_t>{});
+    }
+    else if (opts.passes != 3 && opts.algorithm == OverwriteAlgorithm::SIMPLE)
+    {
+        total_pass = opts.passes;
+        while (pass_patterns.size() < (size_t)total_pass)
+            pass_patterns.push_back({});
+    }
 
     for (int pass = 0; pass < total_pass; pass++)
     {
-        auto &buf = passes[pass];
+        std::vector<uint8_t> pattern_vec;
+        if (pass < (int)pass_patterns.size())
+            pattern_vec = pass_patterns[pass];
+
+        bool is_random = pattern_vec.empty();
+        uint8_t pattern_byte = is_random ? 0 : pattern_vec[0];
+
         uint64_t written = 0;
-        uint64_t offset = 0;
+        lseek(fd, 0, SEEK_SET);
 
         while (written < size)
         {
-            size_t to_write = std::min<size_t>(buf.size(), size - written);
-            ssize_t w = pwrite(fd, buf.data(), to_write, offset);
+            size_t to_write = std::min<size_t>(CHUNK_SIZE, size - written);
+
+            if (is_random)
+            {
+                if (buffer.size() != to_write)
+                    buffer.resize(to_write);
+                fill_random_buffer(buffer);
+            }
+            else
+            {
+                if (buffer.size() != to_write)
+                    buffer.resize(to_write);
+                std::fill(buffer.begin(), buffer.end(), pattern_byte);
+            }
+
+            ssize_t w = write(fd, buffer.data(), to_write);
             if (w <= 0)
             {
                 close(fd);
@@ -75,7 +104,6 @@ bool secure_delete_file(const std::string &path,
             }
 
             written += w;
-            offset += w;
 
             if (progress)
             {
@@ -99,22 +127,14 @@ bool secure_delete_file(const std::string &path,
             return false;
         }
 
-        if (opts.verbose)
-            std::cerr << GREEN << "\npass " << (pass + 1) << "/" << total_pass << " done" << RESET << "\n";
-
-        log_write(opts.log_file, "Pass " + std::to_string(pass + 1) + "/" + std::to_string(total_pass) + " complete");
+        log_write(opts.log_file, "Pass " + std::to_string(pass + 1) + " complete");
     }
 
     struct timespec ts[2] = {{0, UTIME_NOW}, {0, UTIME_NOW}};
-    if (futimens(fd, ts) != 0)
-    {
-        log_write(opts.log_file, "Warning: could not wipe timestamp");
-    }
-    else
-    {
-        log_write(opts.log_file, "Timestamp wiped");
-    }
+    futimens(fd, ts);
 
+    off_t final_len = 0;
+    ftruncate(fd, final_len);
     close(fd);
 
     if (unlink(tmp.c_str()) != 0)

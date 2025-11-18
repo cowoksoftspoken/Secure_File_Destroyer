@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <csignal>
 
 #ifdef _WIN32
 #define OS_NAME "Windows"
@@ -15,6 +16,8 @@
 #define OS_NAME "Unknown POSIX"
 #endif
 
+#define VERSION "1.0.3"
+
 bool is_android()
 {
 #ifdef __linux__
@@ -23,6 +26,21 @@ bool is_android()
 #else
     return false;
 #endif
+}
+
+std::string g_active_log_file = "";
+
+void handle_sigint(int sig)
+{
+    std::cout << "\n\n"
+              << RED << "[!] Cancelled by user" << RESET << "\n";
+
+    if (!g_active_log_file.empty())
+    {
+        log_write(g_active_log_file, "Process cancelled by user (SIGINT)");
+    }
+
+    exit(1);
 }
 
 void print_help()
@@ -76,6 +94,9 @@ void print_help()
 
 int main(int argc, char **argv)
 {
+
+    signal(SIGINT, handle_sigint);
+
     if (argc < 2)
     {
         print_help();
@@ -102,6 +123,13 @@ int main(int argc, char **argv)
         else if (a == "-r")
         {
             opts.mode = OverwriteMode::Random;
+        }
+        else if (a == "--version" || a == "--v")
+        {
+            std::cout << BOLD << CYAN << "Secure File Destroyer" << RESET
+                      << " v" << VERSION << "\n";
+            std::cout << "Build date: " << __DATE__ << " " << __TIME__ << "\n";
+            return 0;
         }
         else if (a == "-v")
         {
@@ -150,6 +178,17 @@ int main(int argc, char **argv)
         }
     }
 
+    g_active_log_file = opts.log_file;
+
+    if (opts.mode == OverwriteMode::Random && opts.algorithm != OverwriteAlgorithm::SIMPLE)
+    {
+        std::cerr << "\n"
+                  << RED << "[!] Error: Argument Conflict" << RESET << "\n";
+        std::cerr << YELLOW << "    You can't use '-r' (Random) together with '--alg' (Algorithm)." << RESET << "\n";
+        std::cerr << "    Reason: Algorithms like DoD/NSA/Gutmann already have their own random patterns.\n\n";
+        return 1;
+    }
+
     if (target.empty())
     {
         std::cerr << RED << "No target specified" << RESET << "\n";
@@ -189,6 +228,8 @@ int main(int argc, char **argv)
 
     draw_real_progress(1, 1, opts.passes, opts.passes);
 
+    std::cout << "\n";
+
     if (is_android())
     {
         if (opts.android_purge)
@@ -201,7 +242,7 @@ int main(int argc, char **argv)
         }
         if (opts.disk_fill)
         {
-            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << RED << BOLD << "[!] Disk-fill Warning" << RESET << "\n";
             std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
             std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
             char answer;
@@ -233,7 +274,7 @@ int main(int argc, char **argv)
         }
         if (opts.disk_fill)
         {
-            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << RED << BOLD << "[!] Disk-fill Warning" << RESET << "\n";
             std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
             std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
             char answer;
@@ -254,7 +295,7 @@ int main(int argc, char **argv)
     {
         if (opts.disk_fill)
         {
-            std::cout << RED << BOLD << "[warn] Disk-fill Warning" << RESET << "\n";
+            std::cout << RED << BOLD << "[!] Disk-fill Warning" << RESET << "\n";
             std::cout << YELLOW << "[*] This feature will attempt to overwrite your free space" << RESET << "\n";
             std::cout << MAGENTA << BOLD << "Are you sure to continue? (y/N)" << RESET;
             char answer;

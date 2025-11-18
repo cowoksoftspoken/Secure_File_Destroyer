@@ -6,47 +6,8 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
-
-static bool write_pass_real(HANDLE h,
-                            const std::vector<uint8_t> &buf,
-                            uint64_t size,
-                            int pass,
-                            int total_pass,
-                            ProgressCallback progress)
-{
-    LARGE_INTEGER li;
-    li.QuadPart = 0;
-    SetFilePointerEx(h, li, NULL, FILE_BEGIN);
-
-    uint64_t written = 0;
-
-    while (written < size)
-    {
-        DWORD chunk = (DWORD)std::min<uint64_t>(buf.size(), size - written);
-        DWORD out = 0;
-
-        if (!WriteFile(h, buf.data(), chunk, &out, NULL) || out == 0)
-            return false;
-
-        written += out;
-
-        if (progress)
-        {
-            FileDeleteStatus st;
-            st.bytes_total = size;
-            st.bytes_written = written;
-            st.current_pass = pass;
-            st.total_pass = total_pass;
-            progress(st);
-        }
-        else
-        {
-            draw_real_progress(written, size, pass, total_pass);
-        }
-    }
-
-    return FlushFileBuffers(h);
-}
+#include <vector>
+#include <algorithm>
 
 bool secure_delete_file(const std::string &path,
                         const DeleteOptions &opts,
@@ -72,7 +33,7 @@ bool secure_delete_file(const std::string &path,
         FILE_SHARE_READ,
         NULL,
         OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
+        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,
         NULL);
 
     if (h == INVALID_HANDLE_VALUE)
@@ -90,48 +51,97 @@ bool secure_delete_file(const std::string &path,
     }
 
     uint64_t size = li.QuadPart;
+    const size_t CHUNK_SIZE = 1024 * 1024;
+    std::vector<uint8_t> buffer(CHUNK_SIZE);
 
-    auto passes = generate_algorithm_passes(opts.algorithm, size);
-    int total_pass = (int)passes.size();
+    auto pass_patterns = generate_algorithm_passes(opts.algorithm);
+    int total_pass = (int)pass_patterns.size();
 
-    for (int i = 0; i < total_pass; i++)
+    if (opts.algorithm == OverwriteAlgorithm::SIMPLE && opts.mode == OverwriteMode::Random && opts.passes > 3)
     {
-        auto &buf = passes[i];
+        total_pass = opts.passes;
+        pass_patterns.assign(total_pass, std::vector<uint8_t>{});
+    }
+    else if (opts.passes != 3 && opts.algorithm == OverwriteAlgorithm::SIMPLE)
+    {
+        total_pass = opts.passes;
+        while (pass_patterns.size() < (size_t)total_pass)
+            pass_patterns.push_back({});
+    }
 
-        if (!write_pass_real(h, buf, size, i + 1, total_pass, progress))
+    for (int pass = 0; pass < total_pass; pass++)
+    {
+        std::vector<uint8_t> pattern_vec;
+        if (pass < (int)pass_patterns.size())
+            pattern_vec = pass_patterns[pass];
+
+        bool is_random = pattern_vec.empty();
+        uint8_t pattern_byte = is_random ? 0 : pattern_vec[0];
+
+        LARGE_INTEGER ptr;
+        ptr.QuadPart = 0;
+        SetFilePointerEx(h, ptr, NULL, FILE_BEGIN);
+
+        uint64_t written = 0;
+        while (written < size)
         {
-            CloseHandle(h);
-            err_msg = "WriteFile failed";
-            return false;
+            DWORD to_write = (DWORD)std::min<uint64_t>(CHUNK_SIZE, size - written);
+
+            if (is_random)
+            {
+                if (buffer.size() != to_write)
+                    buffer.resize(to_write);
+                fill_random_buffer(buffer);
+            }
+            else
+            {
+                if (buffer.size() != to_write)
+                    buffer.resize(to_write);
+                std::fill(buffer.begin(), buffer.end(), pattern_byte);
+            }
+
+            DWORD out = 0;
+            if (!WriteFile(h, buffer.data(), to_write, &out, NULL) || out == 0)
+            {
+                CloseHandle(h);
+                err_msg = "WriteFile failed";
+                return false;
+            }
+
+            written += out;
+
+            if (progress)
+            {
+                FileDeleteStatus st;
+                st.bytes_total = size;
+                st.bytes_written = written;
+                st.current_pass = pass + 1;
+                st.total_pass = total_pass;
+                progress(st);
+            }
+            else
+            {
+                draw_real_progress(written, size, pass + 1, total_pass);
+            }
         }
 
-        if (opts.verbose)
-            std::cerr << GREEN << "\npass " << (i + 1) << "/" << total_pass << " done" << RESET << "\n";
-
-        log_write(opts.log_file, "Pass " + std::to_string(i + 1) + "/" + std::to_string(total_pass) + " complete");
+        FlushFileBuffers(h);
+        log_write(opts.log_file, "Pass " + std::to_string(pass + 1) + " complete");
     }
 
     FILE_BASIC_INFO info = {0};
-    if (!SetFileInformationByHandle(h, FileBasicInfo, &info, sizeof(info)))
-    {
-        log_write(opts.log_file, "Warning: could not wipe timestamp");
-    }
-    else
-    {
-        log_write(opts.log_file, "Timestamp wiped");
-    }
+    SetFileInformationByHandle(h, FileBasicInfo, &info, sizeof(info));
 
     FILE_DISPOSITION_INFO fdi = {TRUE};
-    if (!SetFileInformationByHandle(h, FileDispositionInfo, &fdi, sizeof(fdi)))
-    {
-        log_write(opts.log_file, "Warning: SetFileInformationByHandle failed");
-    }
-    else
-    {
-        log_write(opts.log_file, "MFT delete marker set");
-    }
+    SetFileInformationByHandle(h, FileDispositionInfo, &fdi, sizeof(fdi));
 
     CloseHandle(h);
+
+    if (!DeleteFileA(tmp.c_str()))
+    {
+        err_msg = "Overwritten but failed to delete entry";
+        return false;
+    }
 
     log_write(opts.log_file, "File deleted: " + path);
     return true;

@@ -19,8 +19,7 @@
 
 uint64_t file_size_bytes(const std::string &path);
 bool file_exists(const std::string &path);
-std::vector<uint8_t> random_buffer(size_t size);
-std::vector<uint8_t> pattern_buffer(size_t size, uint8_t value);
+void fill_random_buffer(std::vector<uint8_t> &buf);
 std::string random_filename_in_same_dir(const std::string &original);
 std::vector<std::string> list_all_files(const std::string &folder);
 void log_write(const std::string &file, const std::string &text);

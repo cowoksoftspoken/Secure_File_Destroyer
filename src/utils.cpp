@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <cstring>
 
 uint64_t file_size_bytes(const std::string &path)
 {
@@ -21,21 +22,31 @@ bool file_exists(const std::string &path)
     return std::filesystem::exists(path, ec);
 }
 
-std::vector<uint8_t> random_buffer(size_t size)
+void fill_random_buffer(std::vector<uint8_t> &buf)
 {
-    static thread_local std::mt19937_64 rng(
-        std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<uint8_t> dist(0, 255);
+    std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
+    if (urandom)
+    {
+        urandom.read(reinterpret_cast<char *>(buf.data()), buf.size());
+        urandom.close();
+        return;
+    }
 
-    std::vector<uint8_t> buf(size);
-    for (size_t i = 0; i < size; i++)
-        buf[i] = dist(rng);
-    return buf;
-}
+    std::random_device rd;
+    size_t i = 0;
+    size_t n = buf.size();
 
-std::vector<uint8_t> pattern_buffer(size_t size, uint8_t value)
-{
-    return std::vector<uint8_t>(size, value);
+    while (i + 3 < n)
+    {
+        uint32_t r = rd();
+        std::memcpy(&buf[i], &r, 4);
+        i += 4;
+    }
+
+    while (i < n)
+    {
+        buf[i++] = (uint8_t)rd();
+    }
 }
 
 std::string random_filename_in_same_dir(const std::string &original)
