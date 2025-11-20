@@ -223,7 +223,7 @@ int main(int argc, char **argv)
         std::cerr << RED << "[X] Hardware erase is Linux only." << RESET << "\n";
         return 1;
 #endif
-        bool success = perform_hardware_erase(target, opts);
+        bool success = perform_hardware_erase(opts);
         return success ? 0 : 1;
     }
 

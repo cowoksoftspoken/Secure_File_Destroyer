@@ -6,6 +6,6 @@
 
 bool is_root_user();
 
-bool perform_hardware_erase(const std::string &device, DeleteOptions &opts);
+bool perform_hardware_erase(DeleteOptions &opts);
 
 #endif
