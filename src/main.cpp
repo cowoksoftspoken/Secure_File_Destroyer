@@ -1,5 +1,6 @@
 #include "secure_delete.hpp"
 #include "utils.hpp"
+#include <ssd_delete.hpp>
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -16,7 +17,7 @@
 #define OS_NAME "Unknown POSIX"
 #endif
 
-#define VERSION "1.0.3"
+#define VERSION "1.2.0"
 
 bool is_android()
 {
@@ -90,6 +91,12 @@ void print_help()
 
     std::cout << RED << "Note:" << RESET
               << " no secure delete is perfect on any OS.\n";
+    std::cout << "\n"
+              << RED << BOLD << "SSD/Hardware Dangerous Options (Linux Root Only):" << RESET << "\n";
+    std::cout << "  --alg ata        ATA Secure Erase (hdparm)\n";
+    std::cout << "  --alg nvme       NVMe User Data Erase (nvme-cli)\n";
+    std::cout << "  --alg crypto     Cryptographic Erase (Fastest)\n";
+    std::cout << "  --auto-ssd       Auto-detect & wipe SSD\n";
 }
 
 int main(int argc, char **argv)
@@ -105,6 +112,7 @@ int main(int argc, char **argv)
 
     DeleteOptions opts;
     bool folder_mode = false;
+    bool hardware_mode = false;
     std::string target;
 
     for (int i = 1; i < argc; i++)
@@ -155,10 +163,30 @@ int main(int argc, char **argv)
         {
             opts.android_purge = true;
         }
+        else if (a == "--auto-ssd")
+        {
+            opts.auto_ssd = true;
+            hardware_mode = true;
+        }
         else if (a == "--alg" && i + 1 < argc)
         {
             std::string v = argv[++i];
-            if (v == "simple")
+            if (v == "ata")
+            {
+                opts.algorithm = OverwriteAlgorithm::ATA_SECURE_ERASE;
+                hardware_mode = true;
+            }
+            else if (v == "nvme")
+            {
+                opts.algorithm = OverwriteAlgorithm::NVME_SANITIZE;
+                hardware_mode = true;
+            }
+            else if (v == "crypto")
+            {
+                opts.algorithm = OverwriteAlgorithm::CRYPTOGRAPHIC_ERASE;
+                hardware_mode = true;
+            }
+            else if (v == "simple")
                 opts.algorithm = OverwriteAlgorithm::SIMPLE;
             else if (v == "dod")
                 opts.algorithm = OverwriteAlgorithm::DOD;
@@ -187,6 +215,16 @@ int main(int argc, char **argv)
         std::cerr << YELLOW << "    You can't use '-r' (Random) together with '--alg' (Algorithm)." << RESET << "\n";
         std::cerr << "    Reason: Algorithms like DoD/NSA/Gutmann already have their own random patterns.\n\n";
         return 1;
+    }
+
+    if (hardware_mode)
+    {
+#ifndef __linux__
+        std::cerr << RED << "[X] Hardware erase is Linux only." << RESET << "\n";
+        return 1;
+#endif
+        bool success = perform_hardware_erase(target, opts);
+        return success ? 0 : 1;
     }
 
     if (target.empty())

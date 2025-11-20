@@ -11,7 +11,10 @@ enum class OverwriteAlgorithm
     SIMPLE,
     DOD,
     NSA,
-    GUTMANN
+    GUTMANN,
+    ATA_SECURE_ERASE,
+    NVME_SANITIZE,
+    CRYPTOGRAPHIC_ERASE
 };
 
 enum class OverwriteMode
@@ -31,6 +34,7 @@ struct DeleteOptions
     bool disk_fill = false;
     bool wipe_slack = false;
     bool android_purge = false;
+    bool auto_ssd = false;
 };
 
 struct FileDeleteStatus

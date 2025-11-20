@@ -14,6 +14,7 @@ set(SRC_COMMON
     src/utils.cpp
     src/algorithms.cpp
     src/folder_delete.cpp
+    src/ssd_erase.cpp
 )
 
 if (WIN32)

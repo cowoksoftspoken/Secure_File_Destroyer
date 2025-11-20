@@ -57,5 +57,12 @@ std::vector<std::vector<uint8_t>> generate_algorithm_passes(OverwriteAlgorithm a
         return passes;
     }
 
+    if (alg == OverwriteAlgorithm::ATA_SECURE_ERASE ||
+        alg == OverwriteAlgorithm::NVME_SANITIZE ||
+        alg == OverwriteAlgorithm::CRYPTOGRAPHIC_ERASE)
+    {
+        return passes;
+    }
+
     return passes;
 }
