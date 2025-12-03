@@ -200,11 +200,6 @@ Help:
 secure-delete --help
 ```
 
-## License
-```
-MIT LICENSE
-```
-
 ## Disclaimer
 
 This tool permanently destroys data.  
